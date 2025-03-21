@@ -14,6 +14,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 export const ChatWindow = () => {
   const { display_name, ip, port } = useDisplayNameStore();
   const [chatArr, setChatArr] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const chatWindowRef = useRef<HTMLDivElement | null>(null);
@@ -34,29 +35,41 @@ export const ChatWindow = () => {
   }, [slider.value]);
   useEffect(() => {
     if (!socketRef.current) {
-      socketRef.current = new WebSocket(`ws://${ip}:${port}/ws`);
+      try {
+        socketRef.current = new WebSocket(`ws://${ip}:${port}/ws`);
 
-      socketRef.current.onopen = () => {
-        if (socketRef.current != null && display_name != null) {
+        socketRef.current.onopen = () => {
+          if (socketRef.current != null && display_name != null) {
+            setChatArr((prev) => [
+              ...prev,
+              "Welcome to \u001b[33m✨ Celestial Chat ✨ \u001b[0m",
+              "\u001b[36m Hope you enjoy your stay here <3 \u001b[0m",
+            ]);
+            socketRef.current.send(display_name);
+          }
+        };
+
+        socketRef.current.onmessage = (event) => {
+          setChatArr((prev) => [...prev, event.data]);
+          if (audioRef.current == null) return;
+          //audioRef.current.currentTime = 0;
+          //audioRef.current.play();
+        };
+
+        socketRef.current.onclose = () => {};
+
+        socketRef.current.onerror = () => {
           setChatArr((prev) => [
             ...prev,
-            "Welcome to \u001b[33m✨ Celestial Chat ✨ \u001b[0m",
-            "\u001b[36m Hope you enjoy your stay here <3 \u001b[0m",
+            "There seems to be an error attempting to connect to the server",
           ]);
-          socketRef.current.send(display_name);
-        }
-      };
-
-      socketRef.current.onmessage = (event) => {
-        setChatArr((prev) => [...prev, event.data]);
-        if (audioRef.current == null) return;
-        //audioRef.current.currentTime = 0;
-        //audioRef.current.play();
-      };
-
-      socketRef.current.onclose = () => {};
-
-      socketRef.current.onerror = () => {};
+        };
+      } catch (err: unknown) {
+        setChatArr((prev) => [
+          ...prev,
+          "There seems to be an error attempting to connect to the server",
+        ]);
+      }
     }
     if (audioRef.current == null) return;
     audioRef.current.volume = 0.2;
@@ -92,9 +105,9 @@ export const ChatWindow = () => {
         gapY={1}
         fontSize={"1.0rem"}
       >
-        {chatArr.map((i) => {
+        {chatArr.map((i, idx) => {
           return (
-            <Text overflowWrap={"break-word"} w={"100%"}>
+            <Text key={idx} overflowWrap={"break-word"} w={"100%"}>
               <Ansi>{i}</Ansi>
             </Text>
           );
