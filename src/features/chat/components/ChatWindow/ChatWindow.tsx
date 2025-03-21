@@ -2,6 +2,7 @@ import {
   Button,
   HStack,
   Input,
+  Slider,
   Stack,
   Text,
   useSlider,
@@ -9,17 +10,16 @@ import {
 } from "@chakra-ui/react";
 import { useDisplayNameStore } from "@/store/namestore";
 import Ansi from "@/utils/ansi-to-react";
-import Dice from "@/assets/dice.wav";
+import Notification from "@/assets/notification.mp3";
 import { FormEvent, useEffect, useRef, useState } from "react";
 export const ChatWindow = () => {
   const { display_name, ip, port } = useDisplayNameStore();
   const [chatArr, setChatArr] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const chatWindowRef = useRef<HTMLDivElement | null>(null);
   const slider = useSlider({
-    defaultValue: [0.2],
+    defaultValue: [0.1],
     thumbAlignment: "center",
     min: 0,
     max: 1,
@@ -52,8 +52,8 @@ export const ChatWindow = () => {
         socketRef.current.onmessage = (event) => {
           setChatArr((prev) => [...prev, event.data]);
           if (audioRef.current == null) return;
-          //audioRef.current.currentTime = 0;
-          //audioRef.current.play();
+          audioRef.current.currentTime = 0;
+          audioRef.current.play();
         };
 
         socketRef.current.onclose = () => {};
@@ -96,7 +96,7 @@ export const ChatWindow = () => {
     chatRef.current.value = "";
   };
   return (
-    <Stack w={"100%"} h={"100vh"} justify={"space-between"} p={5} gapY={5}>
+    <Stack w={"100%"} h={"100dvh"} justify={"space-between"} p={5} gapY={5}>
       <VStack
         ref={chatWindowRef}
         alignItems={"start"}
@@ -114,8 +114,7 @@ export const ChatWindow = () => {
         })}
       </VStack>
       <VStack h="fit" bg={"bg"} w="100%">
-        <HStack h="full" w="100%" bg={"bg"}>
-          {/*
+        <HStack h="2rem" w="100%" bg={"bg"}>
           <Slider.RootProvider
             value={slider}
             maxW={"120px"}
@@ -130,10 +129,9 @@ export const ChatWindow = () => {
               <Slider.Thumbs />
             </Slider.Control>
           </Slider.RootProvider>
-					*/}
         </HStack>
         <audio ref={audioRef}>
-          <source src={Dice} type="audio/wav" />
+          <source src={Notification} type="audio/mp3" />
         </audio>
         <form onSubmit={handleSend} className="form-control">
           <HStack h="full" w="100%" bg={"bg"}>
